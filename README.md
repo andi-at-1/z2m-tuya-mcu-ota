@@ -6,6 +6,24 @@ module (standard OTA). Tuya updates the MCU firmware through its own protocol in
 `0xEF00` – normally only the Tuya gateway can do that. This extension takes over that role in
 Zigbee2MQTT.
 
+## Why update at all: the distance report flood
+
+The reason this was built: with the original MCU firmware (1.0.3), the MTG275-ZB-RL presence
+sensor (`_TZE204_dtzziy1e`) reports `target_distance` about once per second, all the time, and
+there is no way to turn it off. A few of these sensors keep a Zigbee network busy enough that
+other devices (e.g. wall switches routed through them) start losing commands.
+
+MCU firmware **1.0.5** adds datapoint **116 `distance_report`**, which switches these reports
+off. The vendor (Wenzhi/LeapMMW) documents it in
+[wzwenzhi/Wenzhi-ZigBee2mqtt#11](https://github.com/wzwenzhi/Wenzhi-ZigBee2mqtt/issues/11); the
+firmware image is in the upgrade package attached to that issue
+(`external shell 150# zigbee_24G_RL/dtzziy1e_v1.0.5_240617.bin`). Normally the update is only
+possible through the Tuya gateway – this extension does it from Zigbee2MQTT.
+
+So the full procedure is: **update the MCU** (below), **re-interview**, then **install the
+external converter** `mtg275-distance-report.mjs` and set `distance_report` to `OFF`
+(see [After the update](#after-the-update-turn-off-the-distance-reports)).
+
 ## Tested
 
 | Device | MCU | Update | Duration |
@@ -80,6 +98,29 @@ MQTT: topic `zigbee2mqtt/bridge/request/device/interview`, payload `{"id": "My_S
 
 Abort: `zigbee2mqtt/mcu_ota/request/abort` with `{}`.
 
+## After the update: turn off the distance reports
+
+The built-in Zigbee2MQTT definition for `_TZE204_dtzziy1e` (model `MTG075-ZB-RL`, white label
+MTG275-ZB-RL) does not know datapoint 116 yet (checked against zigbee-herdsman-converters
+26.105.0). `mtg275-distance-report.mjs` is an external converter: a 1:1 copy of the built-in
+definition, restricted to `_TZE204_dtzziy1e`, plus `distance_report` (DP 116, enum OFF=0/ON=1).
+
+1. Copy `mtg275-distance-report.mjs` to `<z2m data>/external_converters/` (Home Assistant add-on:
+   `/config/zigbee2mqtt/external_converters/`) and restart Zigbee2MQTT.
+2. Set it off:
+
+```
+Topic:   zigbee2mqtt/My_Sensor/set
+Payload: {"distance_report": "OFF"}
+```
+
+Or use the new `distance_report` switch in the Z2M frontend / Home Assistant. Presence,
+illuminance and all settings keep working; only the continuous `target_distance` updates stop.
+On MCU firmware older than 1.0.5 the setting has no effect.
+
+Tested on one sensor with MCU 1.0.5, Z2M 2.14.1. Once zigbee-herdsman-converters supports DP 116
+natively, remove the external converter again.
+
 ## Troubleshooting
 
 - **`failed`, and the device repeats the error every 2 seconds:** briefly disconnect the device
@@ -111,6 +152,8 @@ Protocol (payload after the ZCL header, multi-byte values big-endian):
 ## Files
 
 - `tuya-mcu-ota.mjs` – the extension
+- `mtg275-distance-report.mjs` – external converter adding `distance_report` (DP 116) for
+  `_TZE204_dtzziy1e`
 - `offline-test.mjs` – test against a simulated device (`npm i zigbee-herdsman`, then
   `node offline-test.mjs tuya-mcu-ota.mjs <image.bin>`)
 - `HERDSMAN.md` – what zigbee-herdsman / Zigbee2MQTT would need to change to support this natively
