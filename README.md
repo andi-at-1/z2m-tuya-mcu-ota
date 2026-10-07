@@ -156,4 +156,4 @@ Protocol (payload after the ZCL header, multi-byte values big-endian):
   `_TZE204_dtzziy1e`
 - `offline-test.mjs` – test against a simulated device (`npm i zigbee-herdsman`, then
   `node offline-test.mjs tuya-mcu-ota.mjs <image.bin>`)
-- `HERDSMAN.md` – what zigbee-herdsman / Zigbee2MQTT would need to change to support this natively
+- `HERDSMAN.md` – the full update procedure step by step, every known problem, and what zigbee-herdsman / Zigbee2MQTT would need to change to support this natively
