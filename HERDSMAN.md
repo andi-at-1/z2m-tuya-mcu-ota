@@ -13,7 +13,7 @@ SLZB-07 as coordinator, EmberZNet 8.2.2).
 
 | Problem | Where | Status |
 |---|---|---|
-| `mcuOtaBlockDataRequest.size` is 1 byte, frame arrives as `raw` | herdsman | issue [#1889](https://github.com/Koenkk/zigbee-herdsman/issues/1889), PR (see below) |
+| `mcuOtaBlockDataRequest.size` is 1 byte, frame arrives as `raw` | herdsman | issue [#1889](https://github.com/Koenkk/zigbee-herdsman/issues/1889), PR [#1898](https://github.com/Koenkk/zigbee-herdsman/pull/1898) |
 | multi-byte fields are big-endian, herdsman reads/writes little-endian | herdsman | open, not reported yet |
 | PID split into `key_hi`/`key_lo` | herdsman | open (FIXME in source) |
 | `crc` in `mcuOtaNotify` is a byte sum | herdsman | open |
